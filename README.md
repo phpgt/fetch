@@ -28,12 +28,12 @@ See also, the [JavaScript implementation][fetch-js] that ships as standard in al
 
 ```php
 <?php
-$http = new Gt\Fetch\Http();
+use function Gt\Fetch\fetch;
 
 // Rather than creating the request now, `fetch` returns a Promise, 
 // for later resolution with the BodyResponse.
-$http->fetch("http://example.com/api/something.json")
-->then(function(BodyResponse $response) {
+fetch("http://example.com/api/something.json")
+->then(function(Response $response) {
 // The first Promise resolves as soon as a response is received, even before
 // the body's content has completed downloading.
 	if(!$response->ok) {
@@ -46,7 +46,7 @@ $http->fetch("http://example.com/api/something.json")
 // to access the contents of the whole body, return a new Promise here:
     return $response->json();
 })
-->then(function(Json $json) {
+->then(function(object $json) {
 // The second Promise resolves once the whole body has completed downloading.
     echo "Got JSON result length "
     	. count($json->results)
@@ -54,23 +54,23 @@ $http->fetch("http://example.com/api/something.json")
 
 // Notice that type-safe getters are available on all Json objects:
     echo "Name of first result: "
-    	. $json->results[0]->getString("name")
+    	. $json->results[0]->name
     	. PHP_EOL;
 });
 
 // A third request is made here to show a different type of body response:
-$http->fetch("http://example.com/something.jpg")
-->then(function(BodyResponse $response) {
+fetch("http://example.com/something.jpg")
+->then(function(Response $response) {
     return $response->blob();
 })
-->then(function($blob) {
+->then(function(string $blob) {
     echo "Got JPG blob. Saving file." . PHP_EOL;
     file_put_contents("/tmp/something.jpg", $blob);
 });
 
 // Once all Promises are registered, all HTTP requests can be initiated in
 // parallel, with the callback function triggered when they are all complete. 
-$http->all()->then(function() {
+fetchAwait()->then(function() {
     echo "All HTTP calls have completed!" . PHP_EOL;
 });
 ```
@@ -79,7 +79,7 @@ $http->all()->then(function() {
 
 ```php
 <?php
-$http = new Gt\Fetch\Http();
+$http = new Gt\Fetch\HttpFetch();
 
 $slowRequest = new Request("GET", "http://slow.example.com");
 $fastRequest = new Request("GET", "http://fast.example.com");
@@ -94,7 +94,7 @@ $http->sendAsyncRequest($slowRequest)
 $response = $http->sendRequest($fastRequest);
 
 // Wait for any asynchronous requests to be completed.
-$http->wait();
+$http->await();
 ``` 
 
 For more extensive examples, check out the code in the [example directory](/example).
