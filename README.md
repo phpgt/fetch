@@ -2,7 +2,7 @@
 
 Asynchronous HTTP client, [PSR-7 compatible][psr-7] implementation of the [Fetch Standard][fetch-standard] which defines requests, responses, and the process that binds them: _fetching_.
 
-This repository provides a [_PHP-HTTP Client Implementation_][php-http-client] for standardised HTTP interoperability.
+This repository is compatible with [PSR-18 HTTP Clients][psr-18] for standardised HTTP interoperability.
 
 See also, the [JavaScript implementation][fetch-js] that ships as standard in all modern browsers.
 
@@ -75,31 +75,30 @@ $http->all()->then(function() {
 });
 ```
 
-## Example usage: HTTPlug PHP-HTTP Client & Asynchronous Client
+## Example usage: PSR-18 compatibility
+
+Fetch does not implement a [PSR-18 compatible HTTP client][psr-18], but instead it allows a PSR-18 HTTP client to be injected as a dependency. 
+
+This is useful for projects that already use a specific HTTP client, so that there needs no more HTTP implementations used in your project than are already present.
 
 ```php
 <?php
-$http = new Gt\Fetch\Http();
+$httpClient = new \ThirdParty\Http\Client();
+$http = new Gt\Fetch\Http($httpClient);
 
-$slowRequest = new Request("GET", "http://slow.example.com");
-$fastRequest = new Request("GET", "http://fast.example.com");
-
-// Send the slow request asynchronously (returns a Http\Promise)
-$http->sendAsyncRequest($slowRequest)
-->then(function(ResponseInterface $response) {
-	echo $response->getBody();
+$http->fetch("http://example.com/api/something.json")
+->then(function(BodyResponse $response) {
+	return $response->json();
+})
+->then(function(Json $json) {
+	echo $json->name;
 });
 
-// Perform fast request synchronously (block until response ready)
-$response = $http->sendRequest($fastRequest);
-
-// Wait for any asynchronous requests to be completed.
-$http->wait();
 ``` 
 
 For more extensive examples, check out the code in the [example directory](/example).
 
 [psr-7]: http://www.php-fig.org/psr/psr-7/
+[psr-18]: http://www.php-fig.org/psr/psr-18/
 [fetch-standard]: https://fetch.spec.whatwg.org/
 [fetch-js]: https://developer.mozilla.org/en/docs/Web/API/Fetch_API
-[php-http-client]: http://docs.php-http.org/en/latest/index.html

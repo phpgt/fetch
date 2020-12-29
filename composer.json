@@ -16,7 +16,8 @@
 		"phpgt/http": "*",
 		"phpgt/curl": "*",
 
-		"php-http/httplug": "^2.0",
+		"php-http/promise": ">=1.1.0",
+		"psr/http-client": "^1.0.1",
 		"react/promise": "2.*",
 		"react/event-loop": "^1.0"
 	},

@@ -61,76 +61,6 @@ class HttpTest extends TestCase {
 
 	}
 
-	/** @runInSeparateProcess */
-	public function testSendRequest() {
-		$htmlHelloFetch = "<!doctype html><h1>Hello, Fetch!</h1>";
-		ResponseSimulator::setExpectedBody($htmlHelloFetch);
-
-		$http = new Http(
-			[],
-			0.01,
-			TestCurl::class,
-			TestCurlMulti::class
-		);
-
-		$uri = self::createMock(Uri::class);
-		$request = self::createMock(Request::class);
-		$request->method("getUri")
-			->willReturn($uri);
-
-		/** @var RequestInterface $request */
-
-		$response = $http->sendRequest($request);
-		self::assertInstanceOf(
-			ResponseInterface::class,
-			$response
-		);
-		$body = $response->getBody();
-		self::assertEquals(
-			$htmlHelloFetch,
-			$body->getContents()
-		);
-	}
-
-	/** @runInSeparateProcess */
-	public function testAsyncRequest() {
-		$htmlHelloFetch = "<!doctype html><h1>Hello, Fetch!</h1>";
-		ResponseSimulator::setExpectedBody($htmlHelloFetch);
-
-		$http = new Http(
-			[],
-			0.01,
-			TestCurl::class,
-			TestCurlMulti::class
-		);
-
-		$uri = self::createMock(Uri::class);
-		$request = self::createMock(Request::class);
-		$request->method("getUri")
-			->willReturn($uri);
-
-		/** @var RequestInterface $request */
-
-		$promise = $http->sendAsyncRequest($request);
-		self::assertInstanceOf(
-			Promise::class,
-			$promise
-		);
-
-		$fakeStatus = null;
-
-		$promise->then(function(BodyResponse $response) use(&$fakeStatus) {
-			$fakeStatus = $response->status;
-		});
-
-		$http->wait();
-
-		self::assertEquals(
-			999,
-			$fakeStatus
-		);
-	}
-
 	public function testGetOptions() {
 		$options = [
 			uniqid() => uniqid(),
@@ -175,60 +105,6 @@ class HttpTest extends TestCase {
 		});
 
 		self::assertTrue($finalPromiseResolved);
-	}
-
-	/** @runInSeparateProcess */
-	public function testPsrSendRequest() {
-		$http = new Http(
-			[],
-			0.01,
-			TestCurl::class,
-			TestCurlMulti::class
-		);
-		/** @var MockObject|Uri $uri */
-		$uri = self::createMock(Uri::class);
-		$uri->method("__toString")
-			->willReturn("test://test.from.phpunit");
-
-		/** @var MockObject|Request $request */
-		$request = self::createMock(Request::class);
-		$request->method("getUri")
-			->willReturn($uri);
-		$response = $http->sendRequest($request);
-
-		self::assertEquals(999, $response->getStatusCode());
-	}
-
-	/** @runInSeparateProcess */
-	public function testPsrSendAsyncRequest() {
-		$http = new Http(
-			[],
-			0.01,
-			TestCurl::class,
-			TestCurlMulti::class
-		);
-		/** @var MockObject|Uri $uri */
-		$uri = self::createMock(Uri::class);
-		$uri->method("__toString")
-			->willReturn("test://test.from.phpunit");
-
-		/** @var MockObject|Request $request */
-		$request = self::createMock(Request::class);
-		$request->method("getUri")
-			->willReturn($uri);
-
-		$responseCode = null;
-
-		$http->sendAsyncRequest($request)
-		->then(function(ResponseInterface $response)use(&$responseCode) {
-			$responseCode = $response->getStatusCode();
-		});
-
-		self::assertNull($responseCode);
-
-		$http->all();
-
-		self::assertEquals(999, $responseCode);
 	}
 
 	public function testEnsureUriInterface() {

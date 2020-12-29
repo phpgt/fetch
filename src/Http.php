@@ -6,8 +6,6 @@ use Gt\Curl\CurlMulti;
 use Gt\Fetch\Response\BodyResponse;
 use Gt\Http\Uri;
 use Http\Promise\Promise as HttpPromise;
-use Http\Client\HttpClient;
-use Http\Client\HttpAsyncClient;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -16,7 +14,7 @@ use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
 use React\Promise\Deferred;
 
-class Http implements HttpClient, HttpAsyncClient {
+class Http {
 	const USER_AGENT = "PhpGt/Fetch";
 
 	/** @var float */
@@ -53,34 +51,6 @@ class Http implements HttpClient, HttpAsyncClient {
 			$this->interval,
 			[$this->requestResolver, "tick"]
 		);
-	}
-
-	/**
-	 * @interface HttpClient
-	 */
-	public function sendRequest(
-		RequestInterface $request
-	):ResponseInterface {
-		$returnValue = null;
-
-		$this->fetch($request)
-		->then(function(BodyResponse $response) use(&$returnValue) {
-			$returnValue = $response;
-		});
-
-		$this->wait();
-
-		/** @var BodyResponse $returnValue */
-		return $returnValue;
-	}
-
-	/**
-	 * @interface HttpAsyncClient
-	 */
-	public function sendAsyncRequest(
-		RequestInterface $request
-	):HttpPromise {
-		return $this->fetch($request);
 	}
 
 	/**
