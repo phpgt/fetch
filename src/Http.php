@@ -2,6 +2,8 @@
 namespace Gt\Fetch;
 
 use Gt\Curl\CurlHttpClient;
+use Gt\Http\Header\HeaderLine;
+use Gt\Http\Header\RequestHeaders;
 use Gt\Http\Request;
 use Gt\Http\RequestMethod;
 use Gt\Http\Uri;
@@ -53,10 +55,79 @@ class Http {
 			);
 		}
 
-		// TODO: Process $init onto $request.
+		$this->initRequest($request, $init);
 
 		$client = new CurlHttpClient();
 		return $client->sendAsyncRequest($request);
+	}
+
+	private function initRequest(
+		RequestInterface $request,
+		array $init
+	):RequestInterface {
+		if(isset($init["method"])) {
+			$request = $request->withMethod(strtoupper($init["method"]));
+		}
+
+		if(isset($init["headers"])) {
+			if(is_array($init["headers"])) {
+				$headers = new RequestHeaders($init["headers"]);
+			}
+			else {
+				$headers = $init["headers"];
+			}
+
+			foreach($headers as $headerLine) {
+				/** @var HeaderLine $headerLine */
+				$request = $request->withHeader(
+					$headerLine->getName(),
+// TODO: Unit test required to prove an individual or multiple header is set correctly.
+					$headerLine->getValues()
+				);
+			}
+		}
+
+		if(isset($init["body"])) {
+// TODO: Issue Http#40 - body might be many types (FormData, UrlSearchParams, etc.)
+			$request = $request->withBody($init["body"]);
+		}
+
+		if(isset($init["cache"])) {
+			throw new FetchException("Cache mode is not yet implemented. See issue #91");
+		}
+
+		if(isset($init["redirect"])) {
+			if($init["redirect"] === "follow") {
+				$this->client->setOpt(CURLOPT_FOLLOWLOCATION, true);
+			}
+			elseif($init["redirect"] === "manual") {
+				$this->client->setOpt(CURLOPT_FOLLOWLOCATION, false);
+			}
+		}
+
+		if(isset($init["referrer"])) {
+// The typo here ("Referer") was made in 1991 when the HTTP protocol was designed.
+// Please direct any complaints to Sir Tim Berners-Lee.
+			$request = $request->withHeader("Referer", $init["referrer"]);
+		}
+
+		if(isset($init["integrity"])) {
+			throw new FetchException("Subresource integrity is not yet implemented. See issue #92");
+		}
+
+		if(isset($init["signal"])) {
+			throw new FetchException("AbortSignal is not yet implemented. See issue #93");
+		}
+
+// TODO: Should the following init parameters be respected on the server-side?
+// Tracked in issue #90
+		foreach(["mode", "credentials", "referrerPolicy", "keepalive"] as $nonServerSideInit) {
+			if(isset($init[$nonServerSideInit])) {
+				throw new FetchException("The init parameter '$nonServerSideInit' is not compatible in a server-side context. See issue #90");
+			}
+		}
+
+		return $request;
 	}
 
 	// TODO: await stuff
