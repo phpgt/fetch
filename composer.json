@@ -4,27 +4,59 @@
 	"type": "library",
 	"license": "MIT",
 
+	"repositories": [
+		{
+			"type": "path",
+			"url": "/home/g105b/Code/PhpGt/Curl",
+			"options": {
+				"symlink": true
+			}
+		},
+		{
+			"type": "path",
+			"url": "/home/g105b/Code/PhpGt/Http",
+			"options": {
+				"symlink": true
+			}
+		},
+		{
+			"type": "path",
+			"url": "/home/g105b/Code/PhpGt/Promise",
+			"options": {
+				"symlink": true
+			}
+		},
+		{
+			"type": "path",
+			"url": "/home/g105b/Code/PhpGt/Async",
+			"options": {
+				"symlink": true
+			}
+		}
+	],
+
+
 	"provide": {
 		"php-http/client-implementation": "1.0",
 		"php-http/async-client-implementation": "1.0"
 	},
 
 	"require": {
-		"php": ">=7.2",
+		"php": ">=7.4",
 		"ext-curl": "*",
 		"ext-json": "*",
-		"phpgt/http": "*",
-		"phpgt/curl": "*",
+		"phpgt/http": "dev-45-type-safety",
+		"phpgt/curl": "dev-master",
+		"phpgt/async": "dev-master",
+		"phpgt/promise": "dev-master",
 
-		"php-http/promise": ">=1.1.0",
-		"psr/http-client": "^1.0.1",
-		"react/promise": "2.*",
-		"react/event-loop": "^1.0"
+		"php-http/httplug": "^2.2.0"
 	},
 
 	"require-dev": {
 		"phpunit/phpunit": "9.*",
-		"phpstan/phpstan": ">=0.12.42"
+		"phpstan/phpstan": ">=0.12.42",
+		"jetbrains/phpstorm-attributes": ">=1.0"
 	},
 
 	"autoload": {
