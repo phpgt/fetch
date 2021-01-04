@@ -2,6 +2,7 @@
 namespace Gt\Fetch;
 
 use Gt\Curl\CurlHttpClient;
+use Gt\Curl\CurlOptions;
 use Gt\Http\Header\HeaderLine;
 use Gt\Http\Header\RequestHeaders;
 use Gt\Http\Request;
@@ -10,18 +11,24 @@ use Gt\Http\Uri;
 use Http\Client\HttpAsyncClient;
 use Http\Promise\Promise as HttpPromiseInterface;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 
 class Http {
 	const USER_AGENT = "PhpGt/Fetch";
 
 	protected HttpAsyncClient $client;
+	private CurlOptions $curlOpts;
 
 	public function __construct(
 		HttpAsyncClient $client = null
 	) {
-		$this->client = $client ?? new CurlHttpClient();
+		if($client) {
+			$this->client = $client;
+		}
+		else {
+			$this->curlOpts = new CurlOptions();
+			$this->client = new CurlHttpClient($this->curlOpts);
+		}
 	}
 
 	/**
@@ -98,10 +105,10 @@ class Http {
 
 		if(isset($init["redirect"])) {
 			if($init["redirect"] === "follow") {
-				$this->client->setOpt(CURLOPT_FOLLOWLOCATION, true);
+				$this->curlOpts->set(CURLOPT_FOLLOWLOCATION, true);
 			}
 			elseif($init["redirect"] === "manual") {
-				$this->client->setOpt(CURLOPT_FOLLOWLOCATION, false);
+				$this->curlOpts->set(CURLOPT_FOLLOWLOCATION, false);
 			}
 		}
 
@@ -130,5 +137,10 @@ class Http {
 		return $request;
 	}
 
-	// TODO: await stuff
+	/**
+	 *
+	 */
+	public function await():HttpPromiseInterface {
+
+	}
 }
