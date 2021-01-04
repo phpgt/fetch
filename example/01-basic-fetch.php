@@ -2,8 +2,8 @@
 require(implode(DIRECTORY_SEPARATOR, ["..", "vendor", "autoload.php"]));
 
 use Gt\Fetch\Http;
-use Gt\Fetch\Response\BodyResponse;
 use Gt\Fetch\Response\Json;
+use Gt\Http\Response;
 
 /*
  * This example fetches the list of repositories in the PhpGt organisation from
@@ -12,13 +12,9 @@ use Gt\Fetch\Response\Json;
 
 $http = new Http();
 $http->fetch("https://api.github.com/orgs/phpgt/repos")
-->then(function(BodyResponse $response) {
-	if(!$response->ok) {
-		echo "Error fetching Github's API.";
-		exit(1);
-	}
-
-	return $response->json();
+->then(function(Response $response) {
+	$code = $response->getStatusCode();
+	echo "Response code: $code";
 })
 ->then(function(Json $json) {
 // $json is a pre-decoded object. Expected response is an array of Repositories,
@@ -31,4 +27,4 @@ $http->fetch("https://api.github.com/orgs/phpgt/repos")
 });
 
 // To execute the above Promise(s), call wait() or all().
-$http->wait();
+$http->await();

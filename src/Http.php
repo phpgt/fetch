@@ -1,6 +1,8 @@
 <?php
 namespace Gt\Fetch;
 
+use Gt\Async\GlobalLoop;
+use Gt\Async\Loop;
 use Gt\Curl\CurlHttpClient;
 use Gt\Curl\CurlOptions;
 use Gt\Http\Header\HeaderLine;
@@ -17,18 +19,20 @@ class Http {
 	const USER_AGENT = "PhpGt/Fetch";
 
 	protected HttpAsyncClient $client;
-	private CurlOptions $curlOpts;
+	private Loop $loop;
 
 	public function __construct(
-		HttpAsyncClient $client = null
+		HttpAsyncClient $client = null,
+		Loop $loop = null
 	) {
 		if($client) {
 			$this->client = $client;
 		}
 		else {
-			$this->curlOpts = new CurlOptions();
-			$this->client = new CurlHttpClient($this->curlOpts);
+			$this->client = new CurlHttpClient();
 		}
+
+		$this->loop = $loop ?? GlobalLoop::get();
 	}
 
 	/**
@@ -62,15 +66,17 @@ class Http {
 			);
 		}
 
-		$this->initRequest($request, $init);
+		$curlOpts = new CurlOptions();
+		$request = $this->initRequest($request, $init, $curlOpts);
 
-		$client = new CurlHttpClient();
-		return $client->sendAsyncRequest($request);
+		$this->client->pushCurlOptions($curlOpts);
+		return $this->client->sendAsyncRequest($request);
 	}
 
 	private function initRequest(
 		RequestInterface $request,
-		array $init
+		array $init,
+		CurlOptions $curlOpts
 	):RequestInterface {
 		if(isset($init["method"])) {
 			$request = $request->withMethod(strtoupper($init["method"]));
@@ -105,10 +111,10 @@ class Http {
 
 		if(isset($init["redirect"])) {
 			if($init["redirect"] === "follow") {
-				$this->curlOpts->set(CURLOPT_FOLLOWLOCATION, true);
+				$curlOpts->set(CURLOPT_FOLLOWLOCATION, true);
 			}
 			elseif($init["redirect"] === "manual") {
-				$this->curlOpts->set(CURLOPT_FOLLOWLOCATION, false);
+				$curlOpts->set(CURLOPT_FOLLOWLOCATION, false);
 			}
 		}
 
@@ -140,7 +146,14 @@ class Http {
 	/**
 	 *
 	 */
-	public function await():HttpPromiseInterface {
+	public function await():void {
+		$loop = $this->loop;
+		$loop->haltWhenAllDeferredComplete();
 
+		foreach($this->client->getDeferredList() as $deferred) {
+			$loop->addDeferredToTimer($deferred);
+		}
+
+		$loop->run(true);
 	}
 }
